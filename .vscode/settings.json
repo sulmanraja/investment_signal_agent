@@ -1,0 +1,43 @@
+{
+  // ── Python interpreter ────────────────────────────────────────────────────
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.terminal.activateEnvInCurrentTerminal": true,
+
+  // ── Analysis / linting ────────────────────────────────────────────────────
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.extraPaths": ["${workspaceFolder}"],
+  "python.analysis.autoImportCompletions": true,
+
+  // ── Testing ───────────────────────────────────────────────────────────────
+  "python.testing.pytestEnabled": false,
+  "python.testing.unittestEnabled": false,
+
+  // ── Editor ───────────────────────────────────────────────────────────────
+  "editor.formatOnSave": true,
+  "editor.rulers": [100],
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true
+  },
+
+  // ── Files ─────────────────────────────────────────────────────────────────
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.venv": true,
+    "**/faiss_index": true
+  },
+  "search.exclude": {
+    "**/.venv/**": true,
+    "**/faiss_index/**": true
+  },
+
+  // ── Terminal ─────────────────────────────────────────────────────────────
+  "terminal.integrated.env.osx": {
+    "PYTHONPATH": "${workspaceFolder}"
+  },
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}"
+  }
+}

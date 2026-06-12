@@ -1,0 +1,60 @@
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+.python-version
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.env
+
+# ── FAISS index (large binaries — rebuild with: make run-ingest) ──────────────
+sec_rag/faiss_index/
+faiss_index/
+
+# ── Generated reports (runtime output — not source) ───────────────────────────
+output/reports/*.md
+
+# ── Memory run store (runtime state — not source) ────────────────────────────
+memory/run_store.json
+
+# ── IDE: track shared .vscode/ config, ignore personal overrides ─────────────
+.vscode/*.log
+.vscode/ipch/
+.idea/
+*.iml
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+# Uncomment the next line to stop tracking notebooks:
+# *.ipynb
+
+# ── Logs / temp ───────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak

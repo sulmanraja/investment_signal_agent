@@ -1,0 +1,256 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+
+    // ── Full pipeline ─────────────────────────────────────────────────────
+    {
+      "name": "Run Pipeline (NVDA)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "args": ["NVDA"],
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Run Pipeline (custom ticker)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "args": ["${input:ticker}"],
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+
+    // ── SEC RAG ───────────────────────────────────────────────────────────
+    {
+      "name": "SEC RAG: Ingest",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "sec_rag.ingest",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "SEC RAG: Retriever",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "sec_rag.retriever",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+
+    // ── Tools ─────────────────────────────────────────────────────────────
+    {
+      "name": "Tool: GitHub Trends",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tools.github_tool",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Tool: Google Trends",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tools.google_trends_tool",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Tool: FRED Macro",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tools.fred_macro_tool",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Tool: News",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tools.newsdata_tool",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+
+    // ── Agents ────────────────────────────────────────────────────────────
+    {
+      "name": "Agent: EDGAR RAG",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "agents.edgar_rag_agent",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Agent: Thought Generator",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "agents.thought_generator_agent",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Agent: Critic",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "agents.critic_agent",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Agent: GitHub Trends",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "agents.github_trends_agent",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Agent: News",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "agents.news_agent",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Agent: Macro",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "agents.macro_agent",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+
+    // ── Tree of Thoughts ──────────────────────────────────────────────────
+    {
+      "name": "ToT: Branches",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tot.branches",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "ToT: Evaluator",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tot.evaluator",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "ToT: Beam Search",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tot.beam_search",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+
+    // ── Chains ────────────────────────────────────────────────────────────
+    {
+      "name": "Chain: OODA Loop",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "chains.ooda_loop",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Chain: Signal Alignment",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "chains.signal_alignment",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Chain: Standard Scoring",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "chains.standard_scoring",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Chain: Synthesis",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "chains.synthesis_chain",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+
+    // ── Signals ───────────────────────────────────────────────────────────
+    {
+      "name": "Signals: Alignment Scorer",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "signals.alignment_scorer",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+
+    // ── Tests (no LLM / no API keys) ──────────────────────────────────────
+    {
+      "name": "Test: All (no-dep)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/tests/test_signals.py",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Test: Signals",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/tests/test_signals.py",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Test: Memory",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/tests/test_memory.py",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Test: ToT",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/tests/test_tot.py",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Test: Output",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/tests/test_output.py",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Test: Tools (no API keys)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/tests/test_tools_noapi.py",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    }
+  ],
+
+  "inputs": [
+    {
+      "id": "ticker",
+      "type": "promptString",
+      "description": "Stock ticker symbol (e.g. AAPL, MSFT, NVDA)",
+      "default": "NVDA"
+    }
+  ]
+}

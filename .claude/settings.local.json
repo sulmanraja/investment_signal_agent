@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHONPATH=. python tests/test_signals.py)"
+    ]
+  }
+}

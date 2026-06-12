@@ -1,0 +1,68 @@
+{
+  "categories": {
+    "fundamental": {
+      "description": "SEC filing-derived financial metrics",
+      "sources": ["sec_revenue_growth", "sec_gross_margin"],
+      "weight": 0.35
+    },
+    "macro": {
+      "description": "Macroeconomic environment signals from FRED",
+      "sources": ["macro_rate", "macro_yield_curve"],
+      "weight": 0.25
+    },
+    "sentiment": {
+      "description": "News and social media sentiment",
+      "sources": ["news_sentiment"],
+      "weight": 0.15
+    },
+    "momentum": {
+      "description": "Developer adoption and retail interest signals",
+      "sources": ["github_growth", "google_trends"],
+      "weight": 0.25
+    }
+  },
+  "signal_sources": {
+    "sec_revenue_growth": {
+      "label": "Revenue Growth YoY",
+      "category": "fundamental",
+      "unit": "ratio",
+      "description": "Year-over-year revenue growth rate (e.g. 4.27 = 427%)"
+    },
+    "sec_gross_margin": {
+      "label": "Gross Margin",
+      "category": "fundamental",
+      "unit": "ratio",
+      "description": "Gross profit margin as a decimal (e.g. 0.784 = 78.4%)"
+    },
+    "macro_rate": {
+      "label": "Fed Funds Rate",
+      "category": "macro",
+      "unit": "percent",
+      "description": "Federal funds effective rate in percent"
+    },
+    "macro_yield_curve": {
+      "label": "10Y-2Y Yield Spread",
+      "category": "macro",
+      "unit": "percent",
+      "description": "10-year minus 2-year Treasury spread; negative = inverted"
+    },
+    "news_sentiment": {
+      "label": "News Sentiment Score",
+      "category": "sentiment",
+      "unit": "float [-1, 1]",
+      "description": "Aggregate news sentiment from -1 (very negative) to +1 (very positive)"
+    },
+    "github_growth": {
+      "label": "GitHub Repo Growth",
+      "category": "momentum",
+      "unit": "count",
+      "description": "Number of new trending repositories in the last 90 days"
+    },
+    "google_trends": {
+      "label": "Google Search Interest",
+      "category": "momentum",
+      "unit": "index [0, 100]",
+      "description": "Relative search interest index from Google Trends (100 = peak)"
+    }
+  }
+}
