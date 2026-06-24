@@ -1,7 +1,34 @@
 {
   "permissions": {
     "allow": [
-      "Bash(PYTHONPATH=. python tests/test_signals.py)"
+      "Bash(PYTHONPATH=. python tests/test_signals.py)",
+      "Bash(mkdir -p /Users/sulmanraja/Documents/CMU/EIS-CMU/investment_signal_agent/schemas)",
+      "Bash(pip show *)",
+      "Bash(python -c \"import crewai\")",
+      "Bash(pip list *)",
+      "Bash(pip install *)",
+      "Bash(/opt/homebrew/bin/python3 --version)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//Library/Frameworks/Python.framework/**)",
+      "Read(//opt/homebrew/anaconda3/bin/**)",
+      "Bash(python3.13 --version)",
+      "Bash(/usr/bin/python3 --version)",
+      "Bash(make check *)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('signals/category_registry.json'\\)\\); print\\('category keys:', list\\(d['categories'].keys\\(\\)\\)[:5]\\); print\\('weight keys:', list\\(d['weights'].keys\\(\\)\\)\\)\")",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(make test *)",
+      "Bash(make run-data-integrity *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(make run-escalation *)",
+      "Bash(make run-output-audit *)",
+      "Bash(make run-metrics *)",
+      "Bash(make run-signal-analyst *)",
+      "Bash(make run-retrieval-agent *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(make help *)"
+    ],
+    "additionalDirectories": [
+      "/Users/sulmanraja/Documents/CMU/EIS-CMU/investment_signal_agent"
     ]
   }
 }

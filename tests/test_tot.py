@@ -30,25 +30,27 @@ def test_thought_node():
 
 def test_pruner():
     print("\n--- pruner ---")
+    # Scores on 0-100 scale; floor is 40.0
     nodes = [
-        ThoughtNode("NVDA", "A", 0, "Bullish",     score=8.5),
-        ThoughtNode("NVDA", "B", 0, "Bearish",     score=6.2),
-        ThoughtNode("NVDA", "C", 0, "Neutral",     score=7.1),
-        ThoughtNode("NVDA", "D", 0, "Contrarian",  score=5.8),
+        ThoughtNode("NVDA", "A", 0, "Bullish",     score=85.0),
+        ThoughtNode("NVDA", "B", 0, "Bearish",     score=62.0),
+        ThoughtNode("NVDA", "C", 0, "Neutral",     score=71.0),
+        ThoughtNode("NVDA", "D", 0, "Contrarian",  score=58.0),
     ]
-    kept = prune_beam(nodes, beam_width=2)
-    assert len(kept) == 2
-    assert kept[0].branch == "A"  # highest score
-    assert kept[1].branch == "C"  # second highest
-    print(f"  ✓ Beam width=2 kept: {[n.branch for n in kept]}")
+    survivors, pruned, d_promoted = prune_beam(nodes, beam_width=2)
+    assert len(survivors) == 2
+    assert not d_promoted
+    assert survivors[0].branch == "A"  # highest score
+    assert survivors[1].branch == "C"  # second highest
+    print(f"  ✓ Beam width=2 kept: {[n.branch for n in survivors]}")
 
-    # With unscored nodes (score=None → treated as 0)
+    # With unscored nodes (score=None → treated as 0, falls below floor)
     mixed = [
         ThoughtNode("NVDA", "A", 0, "Bullish"),
-        ThoughtNode("NVDA", "B", 0, "Bearish", score=9.0),
+        ThoughtNode("NVDA", "B", 0, "Bearish", score=90.0),
     ]
-    kept2 = prune_beam(mixed, beam_width=1)
-    assert kept2[0].branch == "B"
+    survivors2, _, _ = prune_beam(mixed, beam_width=1)
+    assert survivors2[0].branch == "B"
     print("  ✓ None scores treated as 0 in pruning")
 
 

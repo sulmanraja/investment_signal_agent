@@ -51,8 +51,8 @@ def test_category_registry():
     registry = load_registry()
     categories = get_categories()
     sources = get_signal_sources()
-    assert "fundamental" in categories
-    assert "macro" in categories
+    assert "ai_ml_infrastructure" in categories
+    assert "cybersecurity" in categories
     assert "sec_revenue_growth" in sources
     print(f"  ✓ Registry loaded: {len(categories)} categories, {len(sources)} signal sources")
 

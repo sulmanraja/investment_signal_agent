@@ -1,3 +1,1 @@
-from output.investment_brief import generate_brief
-
-__all__ = ["generate_brief"]
+# Reports are written to output/reports/ by agents/synthesis_agent.py

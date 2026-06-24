@@ -1,63 +1,69 @@
-"""Branch generator — expands an investment context into A/B/C/D stances.
+"""Branch generator — expands a signal context into the four canonical branches.
 
-A = Bullish  |  B = Bearish  |  C = Neutral  |  D = Contrarian
+Four canonical investment stances (per claud.md spec):
+  A — Capital-Led:          Large capital commitments → structural demand
+  B — Adoption-Led:         Developer/enterprise adoption → sustained growth
+  C — Risk-Adjusted:        Macro/regulatory/competitive headwinds dominate
+  D — Evidence-Insufficient: Contradictory signals → escalate to manual review
+
+Each node MUST include a non-trivial counter_evidence field.
 """
 
 import os
+import json
+import re
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from tot.thought_node import ThoughtNode
+from tot.thought_node import ThoughtNode, BRANCH_LABELS
 
 LLM_MODEL = os.getenv("AGENT_LLM", "granite3.3:8b")
 
 _BRANCH_PROMPT = PromptTemplate.from_template(
-    """You are an investment strategist generating four distinct thesis stances.
+    """You are a technology investment strategist generating four canonical thesis branches.
 
-Given this context for {ticker}:
+Technology category: {ticker}
+Signal context:
 {context}
 
-Generate four investment stances (2-3 sentences each):
-A) BULLISH: The strongest bull case.
-B) BEARISH: The strongest bear case.
-C) NEUTRAL: The wait-and-see / hold case.
-D) CONTRARIAN: A non-consensus view with supporting logic.
+Generate one thesis node per branch. Each must include a non-trivial counter-argument
+that genuinely challenges the stance.
 
-Format your response exactly as:
-A) <text>
-B) <text>
-C) <text>
-D) <text>
+Respond with ONLY valid JSON:
+{{
+  "nodes": [
+    {{
+      "branch": "A",
+      "content": "<Capital-Led: large capital commitments signal durable structural demand — 2-3 sentences>",
+      "counter_evidence": "<specific evidence that would disprove Branch A>"
+    }},
+    {{
+      "branch": "B",
+      "content": "<Adoption-Led: developer/enterprise adoption predicts sustained growth — 2-3 sentences>",
+      "counter_evidence": "<specific evidence that would disprove Branch B>"
+    }},
+    {{
+      "branch": "C",
+      "content": "<Risk-Adjusted: macro/regulatory/competitive headwinds dominate near-term — 2-3 sentences>",
+      "counter_evidence": "<specific evidence that would disprove Branch C>"
+    }},
+    {{
+      "branch": "D",
+      "content": "<Evidence-Insufficient: signals are irreconcilable; manual review required — 2-3 sentences>",
+      "counter_evidence": "<what data would resolve the ambiguity>"
+    }}
+  ]
+}}
 """
 )
 
-BRANCH_LABELS = {"A": "Bullish", "B": "Bearish", "C": "Neutral", "D": "Contrarian"}
-
-
-def _parse_branches(raw: str, ticker: str, depth: int) -> list[ThoughtNode]:
-    """Parse the LLM's A/B/C/D output into ThoughtNode objects."""
-    nodes = []
-    for label in ["A", "B", "C", "D"]:
-        start = raw.find(f"{label})")
-        if start == -1:
-            continue
-        next_labels = [f"{l})" for l in ["A", "B", "C", "D"] if l != label]
-        end = len(raw)
-        for nl in next_labels:
-            idx = raw.find(nl, start + 3)
-            if idx != -1 and idx < end:
-                end = idx
-        content = raw[start + 2:end].strip()
-        nodes.append(ThoughtNode(ticker=ticker, branch=label, depth=depth, content=content))
-    return nodes
-
 
 def generate_branches(ticker: str, context: str, depth: int = 0) -> list[ThoughtNode]:
-    """Generate the four root investment branches for a ticker.
+    """Generate the four canonical investment branches for a category.
 
     Args:
-        ticker: Stock ticker symbol.
+        ticker: Technology category ID or stock ticker.
         context: Aggregated signal context string.
         depth: Tree depth for these nodes (0 for initial generation).
 
@@ -67,17 +73,48 @@ def generate_branches(ticker: str, context: str, depth: int = 0) -> list[Thought
     llm = ChatOllama(model=LLM_MODEL, temperature=0.6)
     chain = _BRANCH_PROMPT | llm | StrOutputParser()
     raw = chain.invoke({"ticker": ticker, "context": context})
-    return _parse_branches(raw, ticker, depth)
+
+    nodes = []
+    try:
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            data = json.loads(match.group())
+            for item in data.get("nodes", []):
+                branch = item.get("branch", "D")
+                if branch not in ("A", "B", "C", "D"):
+                    continue
+                nodes.append(ThoughtNode(
+                    ticker=ticker,
+                    branch=branch,
+                    depth=depth,
+                    content=item.get("content", ""),
+                    counter_evidence=item.get("counter_evidence", ""),
+                ))
+    except (json.JSONDecodeError, ValueError):
+        pass
+
+    # Fallback: ensure all four branches exist
+    existing = {n.branch for n in nodes}
+    for branch in ["A", "B", "C", "D"]:
+        if branch not in existing:
+            nodes.append(ThoughtNode(
+                ticker=ticker, branch=branch, depth=depth,
+                content=f"[Branch {branch} — generation failed]",
+                counter_evidence="",
+            ))
+
+    return sorted(nodes, key=lambda n: n.branch)
 
 
 if __name__ == "__main__":
     print("=== branches local test ===")
     ctx = (
-        "NVDA Q1 FY2025: data-center revenue $22.6B (+427% YoY). "
-        "Blackwell GPU demand described as 'insane'. "
-        "Fed funds rate 5.25%. Yield curve inverted. Export controls risk on H100/A100."
+        "AI/ML Infrastructure — SEC: NVDA data-center revenue +427% YoY. "
+        "GitHub: CUDA repos +3,400 in 90 days. Macro: Fed funds 5.25%, "
+        "yield curve inverted. Export controls on H100/A100 chips."
     )
-    nodes = generate_branches("NVDA", ctx)
+    nodes = generate_branches("ai_ml_infrastructure", ctx)
     for n in nodes:
         print(f"\n{n.branch}) {BRANCH_LABELS[n.branch]}:")
-        print(f"  {n.content}")
+        print(f"   Thesis:  {n.content[:120]}")
+        print(f"   Counter: {n.counter_evidence[:100]}")
