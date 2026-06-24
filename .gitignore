@@ -36,7 +36,7 @@ faiss_index/
 output/reports/*.md
 
 # ── Memory run store (runtime state — not source) ────────────────────────────
-memory/run_store.json
+memory/*.json
 
 # ── IDE: track shared .vscode/ config, ignore personal overrides ─────────────
 .vscode/*.log
