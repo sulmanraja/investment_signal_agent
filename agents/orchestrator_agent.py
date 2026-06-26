@@ -181,7 +181,7 @@ class OrchestratorAgent:
             run_id=self._run_id,
             category_id=category_id,
             category_label=category["label"],
-            tickers=category.get("representative_tickers", []),
+            tickers=category.get("tickers", []),
             query_terms=category.get("query_terms", []),
             cycle_date=self._cycle_date,
         )
@@ -214,7 +214,7 @@ class OrchestratorAgent:
         print(f"  [Orchestrator] ALIGNED → score={final_score:.1f}  stance={stance.value}")
         return CategoryResult(
             category_id=verdict.category_id,
-            category_label=self._registry["technology_categories"][verdict.category_id]["label"],
+            category_label=self._registry["categories"][verdict.category_id]["label"],
             classification=AlignmentClassification.ALIGNED,
             stance=stance,
             final_score=final_score,
@@ -451,7 +451,7 @@ class OrchestratorAgent:
     # ── Main run ──────────────────────────────────────────────────────────────
 
     async def run(self, category_ids: Optional[list[str]] = None) -> str:
-        tech_categories = self._registry.get("technology_categories", {})
+        tech_categories = self._registry.get("categories", {})
         if category_ids:
             tech_categories = {k: v for k, v in tech_categories.items() if k in category_ids}
 
@@ -486,8 +486,7 @@ class OrchestratorAgent:
             context_by_category[cat_id] = context
 
             # Signal analyst classification
-            alignment_req = SignalAnalystAgent.build_request(sub_scores, retrieval)
-            from agents.signal_analyst_agent import SignalAnalystAgent
+            alignment_req = self._signal_analyst.build_request(sub_scores, retrieval)
             verdict = self._signal_analyst.run(alignment_req)
 
             if verdict.classification == AlignmentClassification.ALIGNED:

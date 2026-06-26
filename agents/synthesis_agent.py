@@ -14,11 +14,10 @@ import asyncio
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from crewai import Agent, Task, Crew, LLM
+from crewai import Agent, Task, Crew
 
 from schemas.messages import SynthesisPackage, InvestmentStance, AlignmentClassification
-
-LLM_MODEL = os.getenv("AGENT_LLM", "granite3.3:8b")
+from utils.llm_factory import make_llm
 REPORTS_DIR = Path(__file__).parent.parent / "output" / "reports"
 
 _SYNTHESIS_PROMPT = """You are a senior technology investment strategist writing a formal report.
@@ -112,7 +111,7 @@ class SynthesisAgent:
     name = "SynthesisAgent"
 
     def __init__(self):
-        llm = LLM(model=f"ollama/{LLM_MODEL}", temperature=0.2)
+        llm = make_llm(0.2)
         self._agent = Agent(
             role="Technology Investment Report Writer",
             goal=(
@@ -125,7 +124,7 @@ class SynthesisAgent:
                 "analyses into actionable, well-structured investment guidance."
             ),
             llm=llm,
-            verbose=False,
+            verbose=True,
             allow_delegation=False,
         )
 

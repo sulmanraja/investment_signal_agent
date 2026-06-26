@@ -1,20 +1,35 @@
-from langchain_community.embeddings import HuggingFaceEmbeddings
+import os
+
+from dotenv import load_dotenv
+load_dotenv()
+
 from langchain_community.vectorstores import FAISS
-from langchain_community.llms import Ollama
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableMap
-from langchain_ollama import OllamaEmbeddings
-from sec_rag.config import EMBEDDING_MODEL, FAISS_PATH, LLM
+from sec_rag.config import FAISS_PATH, LLM
+
+
+def _make_embeddings():
+    """Return embeddings backend matching the active EMBEDDING_PROVIDER."""
+    provider = os.getenv("EMBEDDING_PROVIDER", "ollama")
+    if provider == "huggingface":
+        from langchain_community.embeddings import HuggingFaceEmbeddings
+        model = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+        return HuggingFaceEmbeddings(model_name=model)
+    from langchain_ollama import OllamaEmbeddings
+    model = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
+    return OllamaEmbeddings(
+        model=model,
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+    )
 
 
 def load_vectorstore() -> FAISS:
-    #embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
     return FAISS.load_local(
         FAISS_PATH,
-        embeddings,
-        allow_dangerous_deserialization=True
+        _make_embeddings(),
+        allow_dangerous_deserialization=True,
     )
 
 
@@ -71,7 +86,8 @@ Question: {question}
 
 Answer:""")
 
-    llm = Ollama(model=LLM)   # or "mistral", "phi3"
+    from langchain_community.llms import Ollama
+    llm = Ollama(model=LLM, base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
 
     # ── LCEL chain ─────────────────────────────────────────────────────────
     chain = (

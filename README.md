@@ -20,6 +20,95 @@ Reports are written to `output/reports/horizon_report_<timestamp>.md`.
 
 ---
 
+## Claude Plugin (MCP Server)
+
+The system can run as a **Model Context Protocol (MCP) server** inside Claude Code, giving Claude four callable tools without needing to touch the command line.
+
+### How it works
+
+Claude Code auto-detects `.mcp.json` at the project root and starts the server as a subprocess when you open the project. The LLM runs via the **Claude API** (no Ollama required), and embeddings run via **local HuggingFace** models (no Ollama required).
+
+### Prerequisites
+
+| Requirement | Notes |
+|---|---|
+| **Claude Code** | Desktop app or VS Code extension |
+| **Anthropic API key** | [console.anthropic.com](https://console.anthropic.com/) — billed per use |
+| **FRED API key** | Same free key used for local mode |
+| **NewsData API key** | Same free key used for local mode |
+
+### Setup
+
+**1. Install dependencies** (if you haven't already run `make setup`):
+
+```bash
+make setup
+```
+
+**2. Add your Anthropic API key to `.env`:**
+
+```ini
+# .env  — add this line alongside your existing keys
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+**3. Build the FAISS index with HuggingFace embeddings:**
+
+> Skip this step if you already have a `faiss_index/` built with HuggingFace embeddings.
+> If your index was built with Ollama (`nomic-embed-text`), you must rebuild it —
+> the two embedding models produce incompatible vector dimensions.
+
+```bash
+EMBEDDING_PROVIDER=huggingface make run-ingest
+```
+
+**4. Open the project in Claude Code.**
+
+`.mcp.json` is picked up automatically. You will see a tools indicator confirming the `investment-signal-agent` server is connected.
+
+### Available tools
+
+| Tool | Description | Speed |
+|---|---|---|
+| `list_investment_categories` | Returns the 5 sector IDs, labels, and tickers | Instant |
+| `search_sec_filings` | Semantic search over SEC 10-K / 10-Q filings | ~1 s |
+| `get_run_history` | Recent analysis results from long-term memory | Instant |
+| `analyze_investment_categories` | Full 7-agent pipeline → Markdown report | 5–15 min |
+
+### Example prompts
+
+```
+"What investment categories are available?"
+"What did NVDA's filings say about AI infrastructure spending?"
+"What was the stance on semiconductors in the last analysis?"
+"Run a full investment analysis on AI infrastructure and semiconductors."
+```
+
+### What `.mcp.json` does
+
+The server is pre-configured to use the Claude API and HuggingFace embeddings:
+
+```json
+{
+  "mcpServers": {
+    "investment-signal-agent": {
+      "type": "stdio",
+      "command": ".venv/bin/python",
+      "args": ["mcp_server.py"],
+      "env": {
+        "AGENT_LLM_PROVIDER": "anthropic",
+        "AGENT_LLM": "claude-haiku-4-5-20251001",
+        "EMBEDDING_PROVIDER": "huggingface"
+      }
+    }
+  }
+}
+```
+
+To use a more capable model (slower, higher cost), change `AGENT_LLM` to `claude-sonnet-4-6`.
+
+---
+
 ## Architecture
 
 ### Seven-Agent Pipeline

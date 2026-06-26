@@ -22,12 +22,11 @@ import os
 import re
 from datetime import datetime, timezone
 
-from crewai import Agent, Task, Crew, LLM
+from crewai import Agent, Task, Crew
 
 from schemas.messages import TaskAssignment, SubScoreReport
 from tools.edgar_retriever import retrieve_context as _edgar_retrieve
-
-LLM_MODEL = os.getenv("AGENT_LLM", "granite3.3:8b")
+from utils.llm_factory import make_llm
 
 
 # ── Score parser ───────────────────────────────────────────────────────────────
@@ -54,7 +53,12 @@ def _math_github_score(repos: list[dict]) -> float:
 
 
 def _math_news_score(articles: list[dict]) -> float:
-    sentiments = [float(a["sentiment"]) for a in articles if a.get("sentiment") is not None]
+    sentiments = []
+    for a in articles:
+        try:
+            sentiments.append(float(a["sentiment"]))
+        except (TypeError, ValueError, KeyError):
+            pass
     if not sentiments:
         return 50.0
     return round(50.0 + sum(sentiments) / len(sentiments) * 50.0, 1)
@@ -117,7 +121,7 @@ async def _collect_github(
     math_fallback = _math_github_score(repos)
 
     def _run() -> str:
-        llm = LLM(model=f"ollama/{LLM_MODEL}", temperature=0.3)
+        llm = make_llm(0.3)
         agent = Agent(
             role="GitHub Trend Analyst",
             goal="Interpret GitHub repository trends to identify technology adoption momentum as an investment signal.",
@@ -175,7 +179,7 @@ async def _collect_news(
     math_fallback = _math_news_score(articles)
 
     def _run() -> str:
-        llm = LLM(model=f"ollama/{LLM_MODEL}", temperature=0.3)
+        llm = make_llm(0.3)
         agent = Agent(
             role="News Sentiment Analyst",
             goal="Analyse recent news to extract sentiment signals and assess their investment implications.",
@@ -185,7 +189,7 @@ async def _collect_news(
                 "You rate sentiment and flag key catalysts."
             ),
             llm=llm,
-            verbose=False,
+            verbose=True,
             allow_delegation=False,
         )
         task = Task(
@@ -235,7 +239,7 @@ async def _collect_trends(
     math_fallback = _math_trends_score(data)
 
     def _run() -> str:
-        llm = LLM(model=f"ollama/{LLM_MODEL}", temperature=0.3)
+        llm = make_llm(0.3)
         agent = Agent(
             role="Search Trend Analyst",
             goal="Interpret Google Trends search interest data as a signal of enterprise and developer adoption.",
@@ -285,7 +289,7 @@ async def _collect_macro(category: str) -> tuple[float, dict, str, bool]:
     math_fallback = _math_macro_score(snapshot)
 
     def _run() -> str:
-        llm = LLM(model=f"ollama/{LLM_MODEL}", temperature=0.2)
+        llm = make_llm(0.2)
         agent = Agent(
             role="Macro Economist",
             goal=(
@@ -358,7 +362,7 @@ async def _collect_edgar(
     math_fallback = _math_edgar_score(results_by_ticker)
 
     def _run() -> str:
-        llm = LLM(model=f"ollama/{LLM_MODEL}", temperature=0.2)
+        llm = make_llm(0.2)
         agent = Agent(
             role="SEC Filing Analyst",
             goal=(

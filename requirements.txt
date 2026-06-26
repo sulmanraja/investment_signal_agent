@@ -18,3 +18,12 @@ pytrends>=4.9.2
 
 # ── Utilities ─────────────────────────────────────────────────────────────────
 python-dotenv>=1.0.0
+
+# ── MCP server (Claude plugin) ────────────────────────────────────────────────
+mcp[cli]>=1.0.0
+
+# ── Anthropic provider (AGENT_LLM_PROVIDER=anthropic) ────────────────────────
+anthropic>=0.40.0
+
+# ── HuggingFace embeddings (EMBEDDING_PROVIDER=huggingface, no Ollama needed) ─
+sentence-transformers>=3.0.0

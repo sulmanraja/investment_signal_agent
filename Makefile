@@ -8,6 +8,8 @@ PYTHONPATH := $(ROOT)
 PYTHON3_13 := $(shell command -v python3.13 2>/dev/null || echo /opt/homebrew/anaconda3/bin/python3)
 
 export PYTHONPATH
+# macOS: faiss-cpu and PyTorch each ship libomp — suppress the duplicate-init error
+export KMP_DUPLICATE_LIB_OK=TRUE
 
 # ── Setup ─────────────────────────────────────────────────────────────────────
 
@@ -103,6 +105,7 @@ test:
 #   run-retriever requires Ollama + existing FAISS index
 
 run-ingest:
+	rm -rf faiss_index/
 	$(PYTHON) -m sec_rag.ingest
 
 run-retriever:

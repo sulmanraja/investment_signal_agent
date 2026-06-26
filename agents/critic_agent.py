@@ -24,16 +24,15 @@ import asyncio
 import os
 import json
 import re
-from crewai import Agent, Task, Crew, LLM
+from crewai import Agent, Task, Crew
 
+from utils.llm_factory import make_llm
 from schemas.messages import (
     EvaluationRequest,
     NodeScoreReport,
     ScoreReport,
     BranchType,
 )
-
-LLM_MODEL = os.getenv("AGENT_LLM", "granite3.3:8b")
 
 VARIANCE_BAND = 10  # trigger re-evaluation if all scores within this band
 
@@ -136,7 +135,7 @@ class CriticAgent:
     name = "CriticAgent"
 
     def __init__(self):
-        llm = LLM(model=f"ollama/{LLM_MODEL}", temperature=0.1)
+        llm = make_llm(0.1)
         self._agent = Agent(
             role="Investment Thesis Critic",
             goal=(
@@ -149,7 +148,7 @@ class CriticAgent:
                 "views — you form your own assessment purely from the evidence presented."
             ),
             llm=llm,
-            verbose=False,
+            verbose=True,
             allow_delegation=False,
         )
 

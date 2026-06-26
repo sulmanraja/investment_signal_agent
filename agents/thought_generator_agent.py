@@ -22,16 +22,15 @@ import asyncio
 import os
 import json
 import re
-from crewai import Agent, Task, Crew, LLM
+from crewai import Agent, Task, Crew
 
+from utils.llm_factory import make_llm
 from schemas.messages import (
     GenerationRequest,
     ThoughtNodeSchema,
     ThoughtNodesReport,
     BranchType,
 )
-
-LLM_MODEL = os.getenv("AGENT_LLM", "granite3.3:8b")
 
 _BRANCH_DESCRIPTIONS = {
     BranchType.CAPITAL_LED:            "Capital-Led: large capital commitments signal durable structural demand",
@@ -144,7 +143,7 @@ class ThoughtGeneratorAgent:
     name = "ThoughtGeneratorAgent"
 
     def __init__(self):
-        llm = LLM(model=f"ollama/{LLM_MODEL}", temperature=0.7)
+        llm = make_llm(0.7)
         self._agent = Agent(
             role="Investment Thesis Branch Generator",
             goal=(
@@ -158,7 +157,7 @@ class ThoughtGeneratorAgent:
                 "before committing to any investment thesis."
             ),
             llm=llm,
-            verbose=False,
+            verbose=True,
             allow_delegation=False,
         )
 
@@ -202,7 +201,7 @@ class ThoughtGeneratorAgent:
         )
 
     async def _generate_child_nodes(self, request: GenerationRequest) -> ThoughtNodesReport:
-        llm = LLM(model=f"ollama/{LLM_MODEL}", temperature=0.5)
+        llm = make_llm(0.5)
         branch_map = {"A": BranchType.CAPITAL_LED, "B": BranchType.ADOPTION_LED,
                       "C": BranchType.RISK_ADJUSTED, "D": BranchType.EVIDENCE_INSUFFICIENT}
         child_nodes = []

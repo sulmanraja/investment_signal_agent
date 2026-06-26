@@ -58,3 +58,5 @@ memory/*.json
 *.log
 *.tmp
 *.bak
+
+.claude

@@ -34,7 +34,7 @@ from schemas.messages import (
 # Thresholds
 SOURCE_AVAILABILITY_THRESHOLD = 0.70   # below this → Level 2
 MAX_REEVAL_TRIGGERS_PER_RUN = 2        # at or above this → Level 2
-FAILED_SOURCES_HALT_THRESHOLD = 2      # at or above this → Level 3
+FAILED_SOURCES_HALT_THRESHOLD = 4      # at or above this → Level 3
 FORECAST_ACCURACY_THRESHOLD = 0.55     # trailing accuracy below this → Level 2
 
 

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "investment-signal-agent": {
+      "type": "stdio",
+      "command": ".venv/bin/python",
+      "args": ["mcp_server.py"],
+      "env": {
+        "AGENT_LLM_PROVIDER": "anthropic",
+        "AGENT_LLM": "claude-haiku-4-5-20251001",
+        "EMBEDDING_PROVIDER": "huggingface",
+        "KMP_DUPLICATE_LIB_OK": "TRUE"
+      }
+    }
+  }
+}

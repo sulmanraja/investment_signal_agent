@@ -3,15 +3,36 @@ import requests
 import time
 import re
 from bs4 import BeautifulSoup
-# Alternative if langchain_community.embeddings is unresolved
-from langchain_huggingface import HuggingFaceEmbeddings
+from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
-from langchain_ollama import OllamaEmbeddings
 
-from sec_rag.config import EMBEDDING_MODEL, FAISS_PATH, CHUNK_SIZE, CHUNK_OVERLAP
+load_dotenv()
+
+from sec_rag.config import FAISS_PATH, CHUNK_SIZE, CHUNK_OVERLAP
+
+
+def _make_embeddings():
+    """Return embeddings backend selected by EMBEDDING_PROVIDER env var.
+
+    ollama      (default) — nomic-embed-text via local Ollama
+    huggingface           — all-MiniLM-L6-v2, runs fully locally, no Ollama needed
+
+    NOTE: switching providers requires rebuilding the FAISS index (make run-ingest)
+    because vector dimensions differ between models.
+    """
+    provider = os.getenv("EMBEDDING_PROVIDER", "ollama")
+    if provider == "huggingface":
+        from langchain_community.embeddings import HuggingFaceEmbeddings
+        model = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+        return HuggingFaceEmbeddings(model_name=model)
+    from langchain_ollama import OllamaEmbeddings
+    model = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
+    return OllamaEmbeddings(
+        model=model,
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+    )
 
 HEADERS = {"User-Agent": "SulmanRaja sulman.raja@gmail.com", 
                "Accept-Encoding": "gzip, deflate",
@@ -197,8 +218,7 @@ def make_splitter() -> RecursiveCharacterTextSplitter:
 # ── Main ingest ───────────────────────────────────────────────────────────
 def ingest(tickers: list[str], form_types=["10-K", "10-Q"],
            max_filings_per_ticker: int = 3):
-    #embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
+    embeddings = _make_embeddings()
     splitter = make_splitter()
     all_chunks: list[Document] = []
 
@@ -255,8 +275,7 @@ def ingest(tickers: list[str], form_types=["10-K", "10-Q"],
 def ingest_incremental(new_tickers: list[str], form_types=["10-K", "10-Q"],
                        max_filings: int = 3):
     """Merge new tickers into an existing FAISS index."""
-    #embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
+    embeddings = _make_embeddings()
     if os.path.exists(FAISS_PATH):
         vectorstore = FAISS.load_local(
             FAISS_PATH, embeddings, allow_dangerous_deserialization=True
