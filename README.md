@@ -8,6 +8,22 @@ Built as the capstone project for the **CMU Agentic AI Certificate**.
 
 ## Quick Start
 
+The system supports two modes — choose one:
+
+| Mode | LLM | Embeddings | Entry point |
+|---|---|---|---|
+| **Local (Ollama)** | `granite3.3:8b` via Ollama | `nomic-embed-text` via Ollama | `make run` |
+| **Claude Plugin (MCP)** | Claude API (Haiku / Sonnet) | `all-MiniLM-L6-v2` local | Claude Code |
+
+### NOTE: Make sure to run the run-ingest make target when switching between local or anthrpoic!
+
+
+```bash
+make run-ingest
+```
+
+### Local mode
+
 > Assumes Ollama is installed, models are pulled, and `.env` is configured. See [Prerequisites](#prerequisites) and [Installation](#installation) for first-time setup.
 
 ```bash
@@ -17,6 +33,10 @@ make run                 # run all five categories
 ```
 
 Reports are written to `output/reports/horizon_report_<timestamp>.md`.
+
+### Claude Plugin mode
+
+See [Claude Plugin (MCP Server)](#claude-plugin-mcp-server) for setup.
 
 ---
 
@@ -54,13 +74,13 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 **3. Build the FAISS index with HuggingFace embeddings:**
 
-> Skip this step if you already have a `faiss_index/` built with HuggingFace embeddings.
-> If your index was built with Ollama (`nomic-embed-text`), you must rebuild it —
-> the two embedding models produce incompatible vector dimensions.
+Set `EMBEDDING_PROVIDER=huggingface` in your `.env`, then run:
 
 ```bash
-EMBEDDING_PROVIDER=huggingface make run-ingest
+make run-ingest
 ```
+
+`run-ingest` always deletes the existing index before rebuilding, so switching providers is safe. If your index was previously built with Ollama (`nomic-embed-text`, 768 dims) and the provider is now `huggingface` (`all-MiniLM-L6-v2`, 384 dims), this rebuild is required to avoid a dimension mismatch at query time.
 
 **4. Open the project in Claude Code.**
 
@@ -98,12 +118,15 @@ The server is pre-configured to use the Claude API and HuggingFace embeddings:
       "env": {
         "AGENT_LLM_PROVIDER": "anthropic",
         "AGENT_LLM": "claude-haiku-4-5-20251001",
-        "EMBEDDING_PROVIDER": "huggingface"
+        "EMBEDDING_PROVIDER": "huggingface",
+        "KMP_DUPLICATE_LIB_OK": "TRUE"
       }
     }
   }
 }
 ```
+
+`KMP_DUPLICATE_LIB_OK=TRUE` suppresses the macOS OpenMP conflict between `faiss-cpu` and PyTorch (both ship their own `libomp`). It is also exported globally in the Makefile for local runs.
 
 To use a more capable model (slower, higher cost), change `AGENT_LLM` to `claude-sonnet-4-6`.
 
@@ -290,9 +313,13 @@ investment_signal_agent/
 │   ├── test_signals.py
 │   ├── test_tot.py
 │   └── test_tools_noapi.py
-├── main.py                         # Entry point → OrchestratorAgent
+├── utils/
+│   └── llm_factory.py              # make_llm(temp) — routes to Ollama or Anthropic via AGENT_LLM_PROVIDER
+├── main.py                         # Entry point → OrchestratorAgent (local mode)
+├── mcp_server.py                   # FastMCP server — exposes 4 tools to Claude Code
 ├── requirements.txt
 ├── Makefile
+├── .mcp.json                       # Claude Code project registration (auto-detected)
 ├── .env                            # Local secrets (git-ignored)
 └── .env.example                    # Template — copy to .env and fill in keys
 ```
@@ -301,15 +328,29 @@ investment_signal_agent/
 
 ## Prerequisites
 
+### Both modes
+
 | Requirement | Version / Notes |
 |---|---|
 | **Python** | 3.13 required (`crewai` blocks Python ≥ 3.14) |
-| **Ollama** | Local LLM runtime — `ollama serve` must be running |
-| **granite3.3:8b** | Default LLM (~5 GB) — `ollama pull granite3.3:8b` |
-| **nomic-embed-text** | Embedding model for SEC RAG (~270 MB) — `ollama pull nomic-embed-text` |
 | **FRED API key** | Free at [fred.stlouisfed.org](https://fred.stlouisfed.org/docs/api/api_key.html) |
 | **NewsData API key** | Free tier at [newsdata.io](https://newsdata.io/) |
 | **GitHub token** | Optional — raises rate limits from 60 to 5 000 req/h |
+
+### Local mode only
+
+| Requirement | Version / Notes |
+|---|---|
+| **Ollama** | Local LLM runtime — `ollama serve` must be running |
+| **granite3.3:8b** | Default LLM (~5 GB) — `ollama pull granite3.3:8b` |
+| **nomic-embed-text** | Embedding model (~270 MB) — `ollama pull nomic-embed-text` |
+
+### Claude Plugin (MCP) mode only
+
+| Requirement | Version / Notes |
+|---|---|
+| **Claude Code** | Desktop app or VS Code extension |
+| **Anthropic API key** | [console.anthropic.com](https://console.anthropic.com/) — billed per use |
 
 ---
 
@@ -345,9 +386,21 @@ cp .env.example .env
 # Edit .env and fill in your keys
 ```
 
+> For MCP / Anthropic mode, a pre-filled reference file is included:
+> `.env.example.anthropic`. Copy it instead to start with the Anthropic
+> and HuggingFace settings already set:
+> ```bash
+> cp .env.example.anthropic .env
+> # Add your ANTHROPIC_API_KEY, FRED_API_KEY, and NEWSDATA_API_KEY
+> ```
+
+**Local (Ollama) mode** — minimum required keys:
+
 ```ini
 # .env
+AGENT_LLM_PROVIDER=ollama
 AGENT_LLM=granite3.3:8b
+EMBEDDING_PROVIDER=ollama
 EMBEDDING_MODEL=nomic-embed-text
 TOT_MAX_DEPTH=2
 TOT_BEAM_WIDTH=2
@@ -357,13 +410,24 @@ NEWSDATA_API_KEY=your_key_here
 GITHUB_TOKEN=your_token_here    # optional
 ```
 
+**Claude Plugin (MCP) mode** — add these instead of the Ollama settings:
+
+```ini
+AGENT_LLM_PROVIDER=anthropic
+AGENT_LLM=claude-haiku-4-5-20251001
+EMBEDDING_PROVIDER=huggingface
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+> `EMBEDDING_PROVIDER` controls which model is used for the FAISS index. Switching between `ollama` and `huggingface` requires rebuilding the index — `make run-ingest` handles this automatically by deleting the old index first.
+
 ### 5. Build the SEC EDGAR FAISS index
 
 ```bash
 make run-ingest
 ```
 
-This fetches 10-K/10-Q filings for the default tickers (`NVDA MSFT AMZN GOOGL TSM ASML CRWD PANW`), chunks the MD&A sections, and writes the FAISS index to `faiss_index/`. Only needs to be done once (or when you want to refresh filings).
+Fetches 10-K/10-Q filings for the default tickers (`NVDA MSFT AMZN GOOGL TSM ASML CRWD PANW`), chunks the MD&A sections, and writes the FAISS index to `faiss_index/`. Always deletes any existing index before building to prevent dimension mismatches when switching embedding providers. Only needs to be run once (or when refreshing filings or changing `EMBEDDING_PROVIDER`).
 
 ---
 
@@ -479,15 +543,15 @@ Each module has a `__main__` smoke test accessible via `make`:
 | `make run-news` | `tools/newsdata_tool.py` | `NEWSDATA_API_KEY` |
 | `make run-macro` | `tools/fred_macro_tool.py` | `FRED_API_KEY` |
 | `make run-edgar-tool` | `tools/edgar_retriever.py` | FAISS index |
-| `make run-ingest` | `sec_rag/ingest.py` | Ollama |
-| `make run-retriever` | `sec_rag/retriever.py` | Ollama + FAISS |
-| `make run-data-collector` | `agents/data_collector_agent.py` | Ollama + API keys |
-| `make run-thought-generator` | `agents/thought_generator_agent.py` | Ollama |
-| `make run-critic` | `agents/critic_agent.py` | Ollama |
-| `make run-synthesis` | `agents/synthesis_agent.py` | Ollama |
-| `make run-branches` | `tot/branches.py` | Ollama |
-| `make run-evaluator` | `tot/evaluator.py` | Ollama |
-| `make run-beam-search` | `tot/beam_search.py` | Ollama |
+| `make run-ingest` | `sec_rag/ingest.py` | Ollama **or** HuggingFace (set `EMBEDDING_PROVIDER` in `.env`) |
+| `make run-retriever` | `sec_rag/retriever.py` | FAISS index (no LLM needed for search) |
+| `make run-data-collector` | `agents/data_collector_agent.py` | LLM + API keys |
+| `make run-thought-generator` | `agents/thought_generator_agent.py` | LLM |
+| `make run-critic` | `agents/critic_agent.py` | LLM |
+| `make run-synthesis` | `agents/synthesis_agent.py` | LLM |
+| `make run-branches` | `tot/branches.py` | LLM |
+| `make run-evaluator` | `tot/evaluator.py` | LLM |
+| `make run-beam-search` | `tot/beam_search.py` | LLM |
 
 ---
 
@@ -613,13 +677,22 @@ Applied by `SynthesisAgent` after generating the report draft:
 
 ## SEC RAG: Building the FAISS Index
 
+The embedding provider is selected by `EMBEDDING_PROVIDER` in `.env`:
+
+| Value | Model | Dims | Requires |
+|---|---|---|---|
+| `ollama` (default) | `nomic-embed-text` | 768 | Ollama running locally |
+| `huggingface` | `all-MiniLM-L6-v2` | 384 | Nothing — runs fully locally |
+
+**The two models are incompatible.** Switching `EMBEDDING_PROVIDER` requires rebuilding the index.
+
 ### Ingest filings
 
 ```bash
 make run-ingest
 ```
 
-Default tickers: `NVDA MSFT AMZN GOOGL TSM ASML CRWD PANW`. Each filing's MD&A section is chunked and indexed into `faiss_index/`.
+Default tickers: `NVDA MSFT AMZN GOOGL TSM ASML CRWD PANW`. Each filing's MD&A section is chunked and indexed into `faiss_index/`. The old index is always deleted first to prevent dimension mismatches.
 
 To ingest custom tickers:
 
@@ -681,8 +754,8 @@ All agents communicate via typed Pydantic models in `schemas/messages.py`:
 | Package | Purpose |
 |---|---|
 | `langchain` / `langchain-core` | Prompts, chains, runnables |
-| `langchain-community` | FAISS vector store integration |
-| `langchain-ollama` | Ollama LLM + embeddings |
+| `langchain-community` | FAISS vector store + HuggingFace embeddings |
+| `langchain-ollama` | Ollama LLM + embeddings (local mode) |
 | `langchain-text-splitters` | Recursive character splitter |
 | `faiss-cpu` | Local vector similarity index |
 | `crewai ≥ 1.0.0` | Multi-agent roles — DataCollector (5 inline Crews), Thought Generator, Critic, Synthesis |
@@ -690,6 +763,9 @@ All agents communicate via typed Pydantic models in `schemas/messages.py`:
 | `requests` / `beautifulsoup4` | SEC EDGAR HTTP + HTML parsing |
 | `pytrends` | Google Trends scraper |
 | `python-dotenv` | `.env` file loader |
+| `mcp[cli] ≥ 1.0.0` | FastMCP server for Claude Code plugin |
+| `anthropic ≥ 0.40.0` | Claude API client (MCP mode) |
+| `sentence-transformers ≥ 3.0.0` | `all-MiniLM-L6-v2` embeddings (MCP mode, no Ollama needed) |
 
 ---
 
@@ -700,12 +776,15 @@ All agents communicate via typed Pydantic models in `schemas/messages.py`:
 | `ModuleNotFoundError` | `make setup` or `source .venv/bin/activate` |
 | `Connection refused` (port 11434) | Ollama not running — `ollama serve` |
 | `FAISS index not found` | `make run-ingest` to build the SEC index |
+| FAISS dimension mismatch | `EMBEDDING_PROVIDER` changed — run `make run-ingest` to rebuild the index |
 | `FRED_API_KEY not set` | Add key to `.env` |
 | `Failed to fetch SEC filing` | SEC blocks generic User-Agent — check `HEADERS` in `sec_rag/ingest.py` |
 | Red squiggles in VS Code | `Cmd+Shift+P` → **Python: Select Interpreter** → `.venv` |
 | Ollama model not found | `ollama pull granite3.3:8b && ollama pull nomic-embed-text` |
 | `crewai` install fails | Ensure Python 3.13 is used (`make setup` handles this); `crewai` blocks Python ≥ 3.14 |
 | `pip install` fails on `crewai` | Run `make setup` rather than plain `pip install -r requirements.txt` — the Makefile selects Python 3.13 explicitly |
+| `OMP: Error #15` (libomp conflict) | `faiss-cpu` and PyTorch both ship `libomp` on macOS. `KMP_DUPLICATE_LIB_OK=TRUE` is exported by the Makefile (local runs) and set in `.mcp.json` (MCP runs) — no manual action needed |
+| MCP server not connecting in Claude Code | Reload the VS Code window (`Cmd+Shift+P` → **Reload Window**) after editing `.mcp.json` or `.env` |
 
 ---
 

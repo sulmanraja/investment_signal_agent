@@ -283,5 +283,5 @@ class SynthesisPackage(BaseModel):
         description="Claims identified by citation audit without verifiable source backing"
     )
     reeval_trigger_count: int = Field(
-        0, description="Number of Critic variance re-evaluations triggered this run"
+        default=0, description="Number of Critic variance re-evaluations triggered this run"
     )

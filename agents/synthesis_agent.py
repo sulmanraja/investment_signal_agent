@@ -54,7 +54,28 @@ Write a Technology Investment Horizon Report for engineering leaders with:
 
 5. MONITORING TRIGGERS (what would change these stances — 3-5 bullets)
 
+6. OPEN SOURCE WATCH (for technical engineers)
+   For each relevant category, identify 2-3 open source projects, libraries,
+   or developer tools that are gaining meaningful traction in the signal data
+   (GitHub momentum, search interest, or SEC filing mentions). For each:
+   - Project name and brief description (one sentence)
+   - Why it is gaining popularity based on the evidence
+   - Which companies or ecosystems are adopting or backing it
+   Skip categories where the signal data contains no meaningful open source signals.
+
+7. ENTERPRISE APPLICATIONS & PRODUCTS
+   For each relevant category, identify 2-3 commercial products, enterprise
+   platforms, or vendor offerings that appear prominently in the signal data
+   (news coverage, SEC filings, or search interest). For each:
+   - Product or platform name and the problem it solves (one sentence)
+   - Evidence of enterprise adoption or momentum from the signal data
+   - The competitive dynamic: who is winning and who is being displaced
+   Skip categories where the signal data contains no meaningful enterprise product signals.
+
 Use crisp, professional language. Avoid hedging more than once per stance.
+For sections 6 and 7, be concrete — name specific projects and products and
+ground every claim in the signal evidence provided. Do not fabricate names
+or adoption figures that are not present in the data.
 """
 
 
@@ -197,7 +218,10 @@ if __name__ == "__main__":
         emerging_candidates=["Neuromorphic Computing", "Quantum Networking"],
         emerging_rationale="Both show early GitHub adoption momentum without SEC capex confirmation yet.",
         portfolio_deltas={"ai_ml_infrastructure": "HOLD→BUY", "cloud_edge": "BUY→HOLD"},
+        reeval_trigger_count=0,
     )
     agent = SynthesisAgent()
-    report = asyncio.run(agent.run(pkg))
-    print(f"\nReport preview:\n{report[:400]}…")
+    report_text, audit_passed, unsupported = asyncio.run(agent.run(pkg))
+    print(f"\nAudit passed: {audit_passed}")
+    print(f"Unsupported claims: {unsupported}")
+    print(f"\nReport preview:\n{report_text[:400]}…")

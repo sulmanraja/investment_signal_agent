@@ -26,6 +26,7 @@ coverage.xml
 .env
 .env.*
 !.env.example
+!.env.example.anthropic
 *.env
 
 # ── FAISS index (large binaries — rebuild with: make run-ingest) ──────────────
